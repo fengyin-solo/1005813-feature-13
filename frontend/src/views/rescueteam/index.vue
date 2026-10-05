@@ -2,105 +2,191 @@
   <section class="page" data-module="rescueteam">
     <header class="page-head">
       <div>
-        <h2>抢险队调度管理</h2>
-        <p class="page-desc">维护抢险任务，围绕任务编号、任务类型、目标点位、抢险队做登记、筛选与状态流转。</p>
+        <h2>抢险队调度</h2>
+        <p class="page-desc">
+          抢险任务按 待派队 → 抢险中 → 待归队 → 已归队 单向推进。内涝点确认退水后，
+          处置队伍自动落到「待归队清单」，现场归队后在此办结。
+        </p>
       </div>
       <div class="page-actions">
-        <button class="btn primary" type="button" @click="openCreate">登记抢险任务</button>
         <button class="btn" type="button" @click="exportRows">导出抢险队调度清单</button>
       </div>
     </header>
 
     <div class="stat-row">
-      <article v-for="item in stats" :key="item.label" class="stat-card">
-        <span class="stat-label">{{ item.label }}</span>
-        <strong class="stat-value">{{ item.value }}</strong>
+      <article class="stat-card">
+        <span class="stat-label">待派队</span>
+        <strong class="stat-value">{{ stats.dispatchingCount }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">抢险中</span>
+        <strong class="stat-value processing">{{ stats.workingCount }}</strong>
+      </article>
+      <article class="stat-card stat-return">
+        <span class="stat-label">待归队（退水办结）</span>
+        <strong class="stat-value">{{ stats.pendingReturnCount }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">已归队</span>
+        <strong class="stat-value done">{{ stats.returnedCount }}</strong>
       </article>
     </div>
 
-    <p class="status-legend">
-      <span v-for="item in statusSummary" :key="item.status" class="legend-item">
-        {{ item.status }}：{{ item.count }}
-      </span>
-    </p>
-
     <form class="filter-bar" @submit.prevent="reload">
-      <label v-for="field in filterFields" :key="field" class="filter-item">
-        <span>{{ field }}</span>
-        <input v-model="filters[field]" :placeholder="`按${field}检索`" />
+      <label class="filter-item filter-wide">
+        <span>队列检索</span>
+        <input v-model="keyword" placeholder="按任务编号 / 点位 / 抢险队 / 内涝编号检索" />
       </label>
       <button class="btn" type="submit">查询</button>
-      <button class="btn ghost" type="button" @click="resetFilters">重置条件</button>
+      <button class="btn ghost" type="button" @click="resetKeyword">重置条件</button>
     </form>
 
-    <table class="data-table">
+    <h3 class="queue-title return-title">待归队清单（{{ queue.pendingReturn.length }}）</h3>
+    <table class="data-table return-table">
       <thead>
         <tr>
-          <th v-for="column in columns" :key="column">{{ column }}</th>
+          <th>任务编号</th>
+          <th>任务类型</th>
+          <th>目标点位</th>
+          <th>抢险队</th>
+          <th>关联内涝编号</th>
+          <th>出队时间</th>
           <th>当前状态</th>
           <th>可执行动作</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in rows" :key="String(row.id)">
-          <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
-          <td>{{ row.status }}</td>
+        <tr v-for="row in queue.pendingReturn" :key="String(row.id)" class="return-row">
+          <td>{{ row.任务编号 }}</td>
+          <td>{{ row.任务类型 }}</td>
+          <td>{{ row.目标点位 }}</td>
+          <td>{{ row.抢险队 }}</td>
+          <td>{{ row.关联内涝编号 || '—' }}</td>
+          <td>{{ row.出队时间 || '—' }}</td>
+          <td><span class="status-pill return-pill">{{ row.status }}</span></td>
           <td class="row-actions">
-            <button
-              v-for="action in actions"
-              :key="action"
-              class="link"
-              type="button"
-              @click="runAction(action, row)"
-            >
-              {{ action }}
-            </button>
+            <button class="link" type="button" @click="runAction('确认归队', row)">确认归队</button>
           </td>
         </tr>
-        <tr v-if="!rows.length">
-          <td :colspan="columns.length + 2" class="empty-state">暂无抢险队调度数据，可先登记抢险任务</td>
+        <tr v-if="!queue.pendingReturn.length">
+          <td colspan="8" class="empty-state">暂无待归队队伍，退水办结的处置队会自动进入本清单</td>
         </tr>
       </tbody>
     </table>
 
+    <h3 class="queue-title">出动中任务（{{ queue.active.length }}）</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>任务编号</th>
+          <th>任务类型</th>
+          <th>目标点位</th>
+          <th>抢险队</th>
+          <th>关联内涝编号</th>
+          <th>出队时间</th>
+          <th>负责人</th>
+          <th>当前状态</th>
+          <th>可执行动作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="row in queue.active" :key="String(row.id)">
+          <td>{{ row.任务编号 }}</td>
+          <td>{{ row.任务类型 }}</td>
+          <td>{{ row.目标点位 }}</td>
+          <td>{{ row.抢险队 }}</td>
+          <td>{{ row.关联内涝编号 || '—' }}</td>
+          <td>{{ row.出队时间 || '—' }}</td>
+          <td>{{ row.负责人 || '—' }}</td>
+          <td><span class="status-pill">{{ row.status }}</span></td>
+          <td class="row-actions">
+            <button v-if="row.status === '待派队'" class="link" type="button" @click="runAction('派出抢险', row)">
+              派出抢险
+            </button>
+            <template v-if="row.status === '抢险中'">
+              <button class="link" type="button" @click="runAction('确认待归', row)">确认待归</button>
+              <button class="link danger-link" type="button" @click="runAction('终止任务', row)">终止任务</button>
+            </template>
+          </td>
+        </tr>
+        <tr v-if="!queue.active.length">
+          <td colspan="9" class="empty-state">暂无待派队或抢险中的任务</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section class="done-panel">
+      <button class="done-toggle" type="button" @click="showCompleted = !showCompleted">
+        {{ showCompleted ? '▾' : '▸' }} 已办结（{{ queue.completed.length }}）
+      </button>
+      <table v-if="showCompleted" class="data-table">
+        <thead>
+          <tr>
+            <th>任务编号</th>
+            <th>任务类型</th>
+            <th>目标点位</th>
+            <th>抢险队</th>
+            <th>出队时间</th>
+            <th>归队时间</th>
+            <th>当前状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in queue.completed" :key="String(row.id)" class="done-row">
+            <td>{{ row.任务编号 }}</td>
+            <td>{{ row.任务类型 }}</td>
+            <td>{{ row.目标点位 }}</td>
+            <td>{{ row.抢险队 }}</td>
+            <td>{{ row.出队时间 || '—' }}</td>
+            <td>{{ row.归队时间 || '—' }}</td>
+            <td><span class="status-pill done-pill">{{ row.status }}</span></td>
+          </tr>
+          <tr v-if="!queue.completed.length">
+            <td colspan="7" class="empty-state">暂无已办结任务</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <footer class="page-foot">
-      <span>共 {{ total }} 条抢险队调度记录</span>
+      <span>共 {{ queue.pendingReturn.length + queue.active.length + queue.completed.length }} 条抢险任务</span>
       <span v-if="errorMessage" class="error-text">{{ errorMessage }}</span>
+      <span v-else-if="successMessage" class="success-text">{{ successMessage }}</span>
     </footer>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import {
   downloadEntries,
-  listEntries,
+  listRescueQueue,
   moduleMeta,
-  runAction as applyAction,
+  rescueStats,
+  runRescueAction,
+  type RescueQueue,
+  type RescueStats,
 } from '@/api/local-service'
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('rescueteam')
-const columns = ["任务编号", "任务类型", "目标点位", "抢险队", "出队时间", "归队时间", "负责人", "任务状态"]
-const actions = ["派出抢险", "确认归队", "终止任务"]
-const statuses = ["待派队", "抢险中", "已归队", "已终止"]
-const stats = [{"label": "待派队任务", "value": 0}, {"label": "抢险中任务", "value": 0}, {"label": "已归队任务", "value": 0}]
-
-const rows = ref<EntryRow[]>([])
-const total = ref(0)
+const queue = ref<RescueQueue>({ pendingReturn: [], active: [], completed: [] })
+const stats = ref<RescueStats>({ dispatchingCount: 0, workingCount: 0, pendingReturnCount: 0, returnedCount: 0 })
+const keyword = ref('')
 const errorMessage = ref('')
-const filters = ref<Record<string, string>>({})
-const filterFields = columns.slice(0, 3)
-const statusSummary = computed(() =>
-  statuses.map((status: string) => ({
-    status,
-    count: rows.value.filter((row) => String(row.status) === status).length,
-  })),
-)
+const successMessage = ref('')
+const showCompleted = ref(false)
 
-function resetFilters() {
-  filters.value = {}
+function reload() {
+  queue.value = listRescueQueue(keyword.value)
+  stats.value = rescueStats()
+}
+
+function resetKeyword() {
+  keyword.value = ''
+  successMessage.value = ''
+  errorMessage.value = ''
   reload()
 }
 
@@ -108,29 +194,11 @@ function exportRows() {
   downloadEntries(meta.key)
 }
 
-function openCreate() {
-  errorMessage.value = '抢险任务登记入口尚未接入审批流'
-}
-
 function runAction(action: string, row: EntryRow) {
-  errorMessage.value = ''
-  const result = applyAction(meta.key, Number(row.id), action)
-  if (!result.ok) {
-    errorMessage.value = result.message
-    return
-  }
+  const result = runRescueAction(Number(row.id), action)
+  successMessage.value = result.ok ? result.message : ''
+  errorMessage.value = result.ok ? '' : result.message
   reload()
-}
-
-function reload() {
-  errorMessage.value = ''
-  try {
-    const payload = listEntries(meta.key, filters.value)
-    rows.value = payload.items
-    total.value = payload.total
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '抢险队调度列表读取失败'
-  }
 }
 
 onMounted(reload)

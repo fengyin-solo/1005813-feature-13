@@ -35,3 +35,47 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .error-text { color: #b42318; }
 .status-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 10px; font-size: 12px; color: var(--muted); }
 .legend-item { background: #eef2f7; border-radius: 999px; padding: 2px 10px; }
+
+/* 内涝处置队列 & 抢险队调度 */
+.success-text { color: #067647; }
+.stat-card.stat-alert { border-color: #f0a020; background: #fff8ec; }
+.stat-card.stat-return { border-color: #b54708; background: #fff7ed; }
+.stat-value.processing { color: #b54708; }
+.stat-value.done { color: #067647; }
+.report-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+.report-item span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.report-item input, .report-item select { border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 13px; min-width: 150px; }
+.report-item.report-wide { flex: 1 1 220px; }
+.report-item.report-wide input { width: 100%; }
+.rule-hint { font-size: 12px; color: var(--muted); background: #eef5ff; border: 1px dashed #9cc2f5; border-radius: 6px; padding: 6px 10px; margin-bottom: 12px; }
+.filter-item.filter-wide { flex: 1 1 260px; }
+.filter-item.filter-wide input { width: 100%; }
+.queue-title { font-size: 14px; margin: 14px 0 8px; }
+.queue-title.return-title { color: #b54708; }
+.badge { display: inline-block; border-radius: 999px; padding: 1px 10px; font-size: 12px; white-space: nowrap; }
+.badge-normal { background: #eef2f7; color: #475569; }
+.badge-alert { background: #fef3c7; color: #b45309; }
+.badge-critical { background: #fee4e2; color: #b42318; font-weight: 600; }
+.badge-processing { background: #ffedd5; color: #c2410c; font-weight: 600; }
+.depth-alert { color: #b42318; font-weight: 600; }
+.merged-tag { margin-left: 4px; background: #e0e7ff; color: #3730a3; border-radius: 4px; padding: 0 5px; font-size: 11px; }
+.field-tag { margin-left: 4px; background: #dcfae6; color: #067647; border-radius: 4px; padding: 0 5px; font-size: 11px; }
+.status-pill { display: inline-block; border-radius: 999px; padding: 1px 10px; font-size: 12px; background: #e2e8f0; color: #334155; }
+.done-pill { background: #dcfae6; color: #067647; }
+.return-pill { background: #ffedd5; color: #c2410c; font-weight: 600; }
+.return-table { border: 1px solid #fdba74; }
+.return-row { background: #fffaf3; }
+.danger-link { color: #b42318 !important; }
+.done-panel { margin-top: 14px; }
+.done-toggle { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; width: 100%; text-align: left; }
+.done-panel .data-table { margin-top: 8px; }
+.done-row { color: var(--muted); }
+.done-row td { background: #fafbfc; }
+.modal-mask { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.modal-box { background: #fff; border-radius: 10px; padding: 18px 20px; width: 460px; max-width: calc(100vw - 32px); box-shadow: 0 18px 48px rgba(15, 23, 42, 0.25); }
+.modal-title { margin: 0; font-size: 16px; }
+.modal-sub { margin: 4px 0 12px; color: var(--muted); font-size: 13px; }
+.modal-field span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.modal-field input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; font-size: 13px; }
+.modal-note { font-size: 12px; color: #b54708; background: #fff7ed; border-radius: 6px; padding: 6px 9px; margin: 10px 0 0; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
