@@ -18,6 +18,37 @@
       </article>
     </div>
 
+    <section class="pending-return">
+      <h3 class="section-title">待归队清单（内涝点退水办结，队伍待归队）</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>任务编号</th>
+            <th>抢险队</th>
+            <th>目标点位</th>
+            <th>出队时间</th>
+            <th>办结结果</th>
+            <th>可执行动作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="task in pendingReturns" :key="String(task.id)">
+            <td>{{ task.任务编号 }}</td>
+            <td>{{ task.抢险队 }}</td>
+            <td>{{ task.目标点位 }}</td>
+            <td>{{ task.出队时间 }}</td>
+            <td>{{ task.办结结果 }}</td>
+            <td class="row-actions">
+              <button class="link" type="button" @click="returnTeam(task)">确认归队</button>
+            </td>
+          </tr>
+          <tr v-if="!pendingReturns.length">
+            <td colspan="6" class="empty-state">当前没有退水办结待归队的抢险队</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <p class="status-legend">
       <span v-for="item in statusSummary" :key="item.status" class="legend-item">
         {{ item.status }}：{{ item.count }}
@@ -79,6 +110,7 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
+import { confirmReturn, pendingReturnTasks } from '@/api/waterlog-service'
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('rescueteam')
@@ -88,6 +120,7 @@ const statuses = ["待派队", "抢险中", "已归队", "已终止"]
 const stats = [{"label": "待派队任务", "value": 0}, {"label": "抢险中任务", "value": 0}, {"label": "已归队任务", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const pendingReturns = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -122,12 +155,23 @@ function runAction(action: string, row: EntryRow) {
   reload()
 }
 
+function returnTeam(task: EntryRow) {
+  errorMessage.value = ''
+  const result = confirmReturn(Number(task.id))
+  if (!result.ok) {
+    errorMessage.value = result.message
+    return
+  }
+  reload()
+}
+
 function reload() {
   errorMessage.value = ''
   try {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    pendingReturns.value = pendingReturnTasks()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '抢险队调度列表读取失败'
   }

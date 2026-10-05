@@ -35,3 +35,9 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .error-text { color: #b42318; }
 .status-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 10px; font-size: 12px; color: var(--muted); }
 .legend-item { background: #eef2f7; border-radius: 999px; padding: 2px 10px; }
+.section-title { font-size: 14px; margin: 16px 0 8px; }
+.badge-warning { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #fef0c7; color: #b54708; font-size: 12px; }
+.row-warning td { background: #fffaeb; }
+.ok-text { color: #067647; }
+.recede-bar { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; align-items: center; }
+.pending-return { margin-bottom: 16px; }
